@@ -1,4 +1,6 @@
-class Dealer(object):
+from People import People
+
+class Dealer(People):
     def __init__(self, hand, deck):
         self.hand = hand
         self.deck = deck

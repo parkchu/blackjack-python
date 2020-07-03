@@ -1,4 +1,6 @@
-class Player(object):
+from People import People
+
+class Player(People):
     def __init__(self,name, money, hand, bet):
         self.hand = hand
         self.name = name

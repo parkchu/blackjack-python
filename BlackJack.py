@@ -21,37 +21,11 @@ class BlackJack(object):
             player = Player(name, money, [], 0)
             self.player.append(player)
 
-    def hasAce(self, someone):
-        for x in someone.hand:
-            if x.num == 1:
-                return True
-        return False
-            
-    def totalScore(self, someone):
-        total_score = 0
-        for x in someone.hand:
-            total_score += x.num
-        if self.hasAce(someone):
-            if total_score + 10 <= 21:
-                total_score += 10
-            return total_score
-        
-        else:
-            return total_score
-
-    def whetherBust(self, someone):
-        total_score = self.totalScore(someone)
-        if total_score > 21:
-            return True
-            
-        elif total_score <= 21:
-            return False
-
     def resultDealer(self):
-        dealer_total_score = self.totalScore(self.dealer)
+        dealer_total_score = self.dealer.totalScore()
         if self.dealer.whetherGetCard(dealer_total_score):
             self.dealer.getCard()
-            if self.dealer.whetherGetCard(self.totalScore(self.dealer)):
+            if self.dealer.whetherGetCard(self.dealer.totalScore()):
                 return False
             else:
                 return True
@@ -59,12 +33,12 @@ class BlackJack(object):
             return True
 
     def result(self, player):
-        p_total_score = self.totalScore(player)
-        dealer_total_score = self.totalScore(self.dealer)
-        if self.whetherBust(player):
+        p_total_score = player.totalScore()
+        dealer_total_score = self.dealer.totalScore()
+        if player.whetherBust():
             return "playerBust"
         else:
-            if self.whetherBust(self.dealer):
+            if self.dealer.whetherBust():
                 player.win()
                 return "dealerBust"
             else:
@@ -101,19 +75,19 @@ class BlackJack(object):
         for x in self.player:
             while True:
                 time.sleep(1)
-                print("{}님의 카드: ".format(x.name) + x.showHand(), self.totalScore(x))
+                print("{}님의 카드: ".format(x.name) + x.showHand(), x.totalScore())
                 time.sleep(0.5)
                 print("카드를 더 받으시겠습니까? (hit or stay)")
                 if x.whetherHit():
                     self.dealer.playerGetCard(x)
                     print("받으신 카드: " + x.hand[-1].name)
                     time.sleep(1)
-                    if self.whetherBust(x):
-                        print("{}님은 카드의 합이 21을 넘기셔서 버스트 하셨습니다".format(x.name), self.totalScore(x))
+                    if x.whetherBust():
+                        print("{}님은 카드의 합이 21을 넘기셔서 버스트 하셨습니다".format(x.name), x.totalScore())
                         break
                 else:
                     break
-        print("딜러의 카드: " + self.dealer.showHand(), self.totalScore(self.dealer))
+        print("딜러의 카드: " + self.dealer.showHand(), self.dealer.totalScore())
         while True:
             time.sleep(1)
             boolean = self.resultDealer()
@@ -121,10 +95,10 @@ class BlackJack(object):
                 if len(self.dealer.hand) == 2:
                     break
                 else:
-                    print("딜러의 카드: " + self.dealer.showHand(), self.totalScore(self.dealer))
+                    print("딜러의 카드: " + self.dealer.showHand(), self.dealer.totalScore())
                     break
             else:
-                print("딜러의 카드: " + self.dealer.showHand(), self.totalScore(self.dealer))
+                print("딜러의 카드: " + self.dealer.showHand(), self.dealer.totalScore())
 
         for x in self.player:
             result = self.result(x)
