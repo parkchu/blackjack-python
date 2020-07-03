@@ -1,210 +1,152 @@
+import time
 import random
+from Dealer import Dealer
+from Player import Player
+from Deck import *
 
 class BlackJack(object):
-
-    def __init__(self, cards, player, dealer):
-        self.cards = cards
-        self.player = player
+    def __init__(self, dealer, player):
         self.dealer = dealer
-
-    def gameStart(self):
-        for x in self.player:
-            x.betting()
-            x.cards = []
-            self.dealer.cards = []
-        self.dealer.giveCard(self.player, self.cards)
-        for x in self.player:
-            print("{}님은 {} 입니다. 카드를 더 받으시겠습니까? ('hit' or 'stay')".format(x.name, x.showHand()))
-            while True:
-                do = input()
-                if do == "hit":
-                    self.dealer.hit(x, self.cards)
-                    if x.totalScore() > 21:
-                        print("{}카드를 받으셔서 {}입니다. 21을 넘기셨습니다. 버스트입니다".format(x.cards[-1].name, x.showHand()))
-                        x.bust = True
-                        break
-                    elif x.totalScore() <= 21:
-                        print("{}카드를 받으셔서 {}입니다. 카드를 받으시겠습니까? ('hit' or 'stay')".format(x.cards[-1].name, x.showHand()))
-                elif do == "stay":
-                    break
-        self.result()
+        self.player = player
         
-    def result(self):
-        dealerScore = self.dealer.totalScore()
-        print("딜러의 카드는 {}입니다.".format(self.dealer.showHand()))
-        self.dealer.openCard(self.cards)
-        for x in self.player:
-            playerScore = x.totalScore()
-            print("{}님은".format(x.name))
-            if x.bust:
-                print("버스트입니다")
-                print("소지한 금액이 {}으로 되었습니다".format(x.money))
+    def playerNum(self):
+        player_num = int(input())
+        return player_num
 
+    def getNameMoney(self, player_num):
+        for x in range(player_num):
+            name_money = list(input().split())
+            name = name_money[0]
+            money = int(name_money[1])
+            player = Player(name, money, [], 0)
+            self.player.append(player)
+
+    def hasAce(self, someone):
+        for x in someone.hand:
+            if x.num == 1:
+                return True
+        return False
+            
+    def totalScore(self, someone):
+        total_score = 0
+        for x in someone.hand:
+            total_score += x.num
+        if self.hasAce(someone):
+            if total_score + 10 <= 21:
+                total_score += 10
+            return total_score
+        
+        else:
+            return total_score
+
+    def whetherBust(self, someone):
+        total_score = self.totalScore(someone)
+        if total_score > 21:
+            return True
+            
+        elif total_score <= 21:
+            return False
+
+    def resultDealer(self):
+        dealer_total_score = self.totalScore(self.dealer)
+        if self.dealer.whetherGetCard(dealer_total_score):
+            self.dealer.getCard()
+            if self.dealer.whetherGetCard(self.totalScore(self.dealer)):
+                return False
             else:
-                if self.dealer.bust:
-                    print("딜러가 버스트하여 이기셨습니다")
-                    x.money = x.money + (x.bet * 2)
-                    print("소지한 금액이 {}으로 되었습니다".format(x.money))
-                else:
-                    if dealerScore == playerScore:
-                        print('비겼습니다')
-                        x.money = x.money + x.bet
-                        print("소지한 금액이 {}으로 되었습니다".format(x.money))
-                    elif dealerScore > playerScore:
-                        print('졌습니다')
-                        print("소지한 금액이 {}으로 되었습니다".format(x.money))
-                    elif dealerScore < playerScore:
-                        print("이겼습니다")
-                        x.money = x.money + (x.bet * 2)
-                        print("소지한 금액이 {}으로 되었습니다".format(x.money))
-            
-class Card(object):
+                return True
+        else:
+            return True
 
-    def __init__(self, name, num):
-        self.name = name
-        self.num = num
-
-class Player(object):
-
-    def __init__(self, name, money, cards, bust, bet):
-        self.name = name
-        self.money = money
-        self.cards = cards
-        self.bust = bust
-        self.bet = bet
-        
-    def totalScore(self):
-        total_score = 0
-        ace = False
-        for x in self.cards:
-            if x.num == 1:
-                ace = True
-            total_score = total_score + x.num
-            if ace:
-                if total_score <= 11:
-                    total_score = total_score + 10
-        return total_score
-    
-    def showHand(self):
-        hand = ""
-        for x in self.cards:
-            hand = hand + x.name
-        return hand
-    
-    def betting(self):
-        print("{}님의 배팅금액을 입력해주세요".format(self.name))
-        while True:
-            try:
-                bet = int(input())
-                if bet > self.money:
-                    print("소지한 금액보다 큰 돈은 배팅할수없습니다.")
-                    error = int("error")
-                elif bet <= self.money:
-                    self.bet = bet
-                    self.money = self.money - bet
-                    break
-            except:
-                print("금액을 입력해주세요")
-        
-class Dealer(object):
-
-    def __init__(self, cards, bust):
-        self.cards = cards
-        self.bust = bust
-    def giveCard(self, players, cards):
-        random.shuffle(cards)
-        for y in range(2):
-            for x in players:
-                x.cards.append(cards[0])
-                del cards[0]
-            self.cards.append(cards[0])
-            del cards[0]
-    def totalScore(self):
-        total_score = 0
-        ace = False
-        for x in self.cards:
-            total_score = total_score + x.num
-            if x.num == 1:
-                ace = True
-            if ace:
-                if total_score <= 11:
-                    total_score = total_score + 10
-        return total_score
-        
-    def hit(self, player, cards):
-        player.cards.append(cards[0])
-        del cards[0]
-
-    def showHand(self):
-        hand = ""
-        for x in self.cards:
-            hand = hand + x.name
-        return hand
-
-    def openCard(self, cards):
-        while self.totalScore() <= 16:
-            self.cards.append(cards[0])
-            if self.totalScore() > 21:
-                print("딜러는 {}카드를 받았습니다. {}로 21을 넘겼기에 버스트입니다.".format(cards[0].name, self.showHand()))
-                self.bust = True
-            elif self.totalScore() <= 21:
-                print("딜러는 {}카드를 받았습니다. {}입니다.".format(cards[0].name, self.showHand()))
-            del cards[0]
-            
-        
-deck = []
-player = []
-
-shape = ['♠', '♣', '♥', '◈']
-def makeDeck():
-        for x in range(1, 14):
-            for y in shape:
-                
-                if x == 1:
-                    deck.append(Card("{}A".format(y), x))
-
-                elif x == 11:
-                    deck.append(Card("{}J".format(y), 10))
- 
-                elif x == 12:
-                    deck.append(Card("{}Q".format(y), 10))
-
-                elif x == 13:
-                    deck.append(Card("{}K".format(y), 10))
-
-                else:
-                    deck.append(Card("{}{}".format(y,x), x))
-
+    def result(self, player):
+        p_total_score = self.totalScore(player)
+        dealer_total_score = self.totalScore(self.dealer)
+        if self.whetherBust(player):
+            return "playerBust"
+        else:
+            if self.whetherBust(self.dealer):
+                player.win()
+                return "dealerBust"
+            else:
+                if p_total_score == dealer_total_score:
+                    player.draw()
+                    return "draw"
+                elif p_total_score > dealer_total_score:
+                    player.win()
+                    return "playerWin"
+                elif p_total_score < dealer_total_score:
+                    return "dealerWin"
                     
-makeDeck()
+    def readyGame(self):
+        print("몇명의 플레이어가 참여합니까? (최대 5명)")
+        player_num = self.playerNum()
+        print("플레이어의 이름과 보유중인 금액을 입력해주세요. (띄어쓰기로 구분합니다)")
+        self.getNameMoney(player_num)
+        
+    def gameStart(self):
+        time.sleep(0.5)
+        print("게임을 시작하도록 하겠습니다")
+        for x in self.player:
+            time.sleep(1)
+            print("{}님의 보유 금액은 {}입니다. 배팅해주세요".format(x.name, x.money))
+            while True:
+                try:
+                    x.betting()
+                    break
+                except:
+                    print("배팅금액만큼의 돈을 소유하고 계시지 않습니다 다시 입력해주세요")
+        self.dealer.gameStart(self.player)
+        time.sleep(1)
+        print("딜러의 카드: " + self.dealer.hand[0].name)
+        for x in self.player:
+            while True:
+                time.sleep(1)
+                print("{}님의 카드: ".format(x.name) + x.showHand(), self.totalScore(x))
+                time.sleep(0.5)
+                print("카드를 더 받으시겠습니까? (hit or stay)")
+                if x.whetherHit():
+                    self.dealer.playerGetCard(x)
+                    print("받으신 카드: " + x.hand[-1].name)
+                    time.sleep(1)
+                    if self.whetherBust(x):
+                        print("{}님은 카드의 합이 21을 넘기셔서 버스트 하셨습니다".format(x.name), self.totalScore(x))
+                        break
+                else:
+                    break
+        print("딜러의 카드: " + self.dealer.showHand(), self.totalScore(self.dealer))
+        while True:
+            time.sleep(1)
+            boolean = self.resultDealer()
+            if boolean:
+                if len(self.dealer.hand) == 2:
+                    break
+                else:
+                    print("딜러의 카드: " + self.dealer.showHand(), self.totalScore(self.dealer))
+                    break
+            else:
+                print("딜러의 카드: " + self.dealer.showHand(), self.totalScore(self.dealer))
 
-while True:
-    try:
-        print("플레이어의 이름을 입력해주세요 (최대 5명이며 띄어쓰기로 구분합니다)")
-        member = list(input().split())
-        size = len(member)
-        if size > 5:
-            error = int("에러")
-        elif size <= 5:
-            break
-  
-    except:
-        print("5명 이하만 입력해주세요")
+        for x in self.player:
+            result = self.result(x)
+            time.sleep(1)
+            if result == "playerBust":
+                print("{}님은 버스트했습니다".format(x.name))
+            elif result == "dealerBust":
+                print("{}님은 딜러가 버스트하여 승리하셨습니다".format(x.name))
+            elif result == "draw":
+                print("{}님은 무승부 입니다".format(x.name))
+            elif result == "playerWin":
+                print("{}님은 이기셨습니다".format(x.name))
+            elif result == "dealerWin":
+                print("{}님은 패배하셨습니다".format(x.name))
+            x.resetHand()
+        self.dealer.resetHand()
+        
+                    
+            
 
 
 
-while True:
-    try:
-        for x in member:
-                print("{}님이 소지한 금액을 입력해주세요".format(x))
-                money = int(input())
-                player.append(Player(x, money, [], False, 0))
-        break
-
-    except:
-        print("숫자만 입력해주세요")
 
 
-game = BlackJack(deck, player, Dealer([], False))
-game.gameStart()
-
+        
